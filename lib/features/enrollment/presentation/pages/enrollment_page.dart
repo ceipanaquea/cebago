@@ -24,12 +24,12 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
   late TextEditingController _phoneController;
   late TextEditingController _ageController;
 
-  // New controllers for Section 1 extended
+  // Section 1 extended
   late TextEditingController _birthDateController;
   late TextEditingController _emailController;
   late TextEditingController _addressController;
 
-  // Controllers for Section 2
+  // Section 2
   late TextEditingController _lastSchoolController;
   late TextEditingController _lastYearController;
 
@@ -117,7 +117,6 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
       }
       _selectedCycle = normalizedCycle;
 
-      // Populate new CEBA fields
       if (_sexList.contains(state.sex)) {
         _selectedSex = state.sex;
       }
@@ -179,7 +178,7 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
         if (state is EnrollmentActiveState) {
           _populateData(state);
           final bool allDocsUploaded = state.documents.every((d) => d.isUploaded);
-          final bool isComplete = state.isPersonalDataSubmitted && allDocsUploaded;
+          final bool isComplete = state.isSpecialOptionsSubmitted && allDocsUploaded;
 
           return Scaffold(
             backgroundColor: AppColors.background,
@@ -188,7 +187,7 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
               elevation: 0,
               leading: const SizedBox.shrink(),
               title: Text(
-                'Proceso de Matrícula',
+                'Ficha de Matrícula',
                 style: AppTypography.headlineLg(color: AppColors.onSurface),
               ),
               centerTitle: true,
@@ -223,7 +222,7 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Progreso General',
+                              'Progreso de tu Matrícula',
                               style: AppTypography.labelLg(color: AppColors.outline),
                             ),
                             const SizedBox(height: 4),
@@ -270,7 +269,8 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                               ),
                             ),
                           ],
-                          // Sección 1: Datos Personales
+
+                          // SECCIÓN 1: Datos Personales
                           Row(
                             children: [
                               Container(
@@ -371,15 +371,6 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      state.hasAvailableVacancy
-                                          ? 'Vacantes disponibles: ${state.availableVacanciesCount}'
-                                          : 'Sin vacantes disponibles',
-                                      style: AppTypography.labelXs(
-                                        color: state.hasAvailableVacancy ? Colors.green[800] : AppColors.error,
-                                      ).copyWith(fontWeight: FontWeight.bold),
-                                    ),
                                   ],
                                 ),
                               ),
@@ -446,6 +437,7 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             prefixIcon: Icons.email_outlined,
+                            validator: (val) => val == null || val.isEmpty ? 'Requerido' : null,
                           ),
                           const SizedBox(height: 16),
                           AppTextField(
@@ -453,183 +445,263 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                             hint: 'Av. Las Gardenias 123, Lima',
                             controller: _addressController,
                             prefixIcon: Icons.home_outlined,
-                          ),
-                          const SizedBox(height: 20),
-                          AppButton(
-                            label: 'Guardar Nombres y Plan',
-                            variant: AppButtonVariant.outlined,
-                            loading: state.isSubmitting,
-                            onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                context.read<EnrollmentBloc>().add(SubmitPersonalData(
-                                      fullName: _nameController.text,
-                                      dni: _dniController.text,
-                                      phone: _phoneController.text,
-                                      age: _ageController.text,
-                                      cycle: _selectedCycle,
-                                      sex: _selectedSex,
-                                      birthDate: _birthDateController.text,
-                                      email: _emailController.text,
-                                      address: _addressController.text,
-                                    ));
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('¡Datos personales actualizados correctamente!'),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-                              }
-                            },
+                            validator: (val) => val == null || val.isEmpty ? 'Requerido' : null,
                           ),
 
-                          // Sección 2: Antecedentes Académicos
-                          if (state.isPersonalDataSubmitted) ...[
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 24),
-                              child: Divider(height: 1, color: AppColors.outlineVariant),
-                            ),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primaryContainer.withValues(alpha: 0.2),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(Icons.school_outlined, color: AppColors.primary, size: 20),
-                                ),
-                                const SizedBox(width: 12),
-                                Text('2. Antecedentes Académicos', style: AppTypography.headlineMd(color: AppColors.onSurface)),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            AppTextField(
-                              label: 'Última Institución Educativa',
-                              hint: 'Ej. I.E. Pedro Paulet',
-                              controller: _lastSchoolController,
-                              prefixIcon: Icons.account_balance_outlined,
-                              validator: (val) => val == null || val.isEmpty ? 'Requerido' : null,
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Último Grado Aprobado',
-                                        style: AppTypography.labelLg(color: AppColors.onSurfaceVariant),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.surfaceContainerLowest,
-                                          borderRadius: BorderRadius.circular(8),
-                                          border: Border.all(color: AppColors.outlineVariant),
-                                        ),
-                                        child: DropdownButtonHideUnderline(
-                                          child: DropdownButton<String>(
-                                            value: _selectedGrade,
-                                            isExpanded: true,
-                                            style: AppTypography.bodySm(color: AppColors.onSurface),
-                                            items: _gradesList.map((String value) {
-                                              return DropdownMenuItem<String>(
-                                                value: value,
-                                                child: Text(value),
-                                              );
-                                            }).toList(),
-                                            onChanged: (val) {
-                                              if (val != null) {
-                                                setState(() => _selectedGrade = val);
-                                              }
-                                            },
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: AppTextField(
-                                    label: 'Último Año de Estudio',
-                                    hint: 'Ej. 2021',
-                                    controller: _lastYearController,
-                                    keyboardType: TextInputType.number,
-                                    prefixIcon: Icons.calendar_month_outlined,
-                                    validator: (val) => val == null || val.isEmpty ? 'Requerido' : null,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceContainerLowest,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: AppColors.outlineVariant),
-                              ),
-                              child: SwitchListTile(
-                                title: Text(
-                                  'Llevo más de 2 años fuera del sistema educativo',
-                                  style: AppTypography.labelLg(color: AppColors.onSurface),
-                                ),
-                                subtitle: Text(
-                                  'Si marcas esto, puedes solicitar una prueba de ubicación.',
-                                  style: AppTypography.bodySm(color: AppColors.onSurfaceVariant),
-                                ),
-                                value: _hasLongAbsence,
-                                activeThumbColor: AppColors.primary,
-                                onChanged: (val) => setState(() {
-                                  _hasLongAbsence = val;
-                                  if (!val) _requestsPlacementTest = false;
-                                }),
-                              ),
-                            ),
-                            if (_hasLongAbsence) ...[
-                              const SizedBox(height: 12),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 24),
+                            child: Divider(height: 1, color: AppColors.outlineVariant),
+                          ),
+
+                          // SECCIÓN 2: Antecedentes Académicos
+                          Row(
+                            children: [
                               Container(
+                                padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primaryContainer.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: AppColors.primaryContainer),
+                                  color: AppColors.primaryContainer.withValues(alpha: 0.2),
+                                  shape: BoxShape.circle,
                                 ),
-                                child: CheckboxListTile(
-                                  title: Text(
-                                    'Solicitar Prueba de Ubicación',
-                                    style: AppTypography.labelLg(color: AppColors.onSurface),
-                                  ),
-                                  subtitle: Text(
-                                    'Un docente evaluará tus conocimientos para ubicarte en el ciclo correcto.',
-                                    style: AppTypography.bodySm(color: AppColors.onSurfaceVariant),
-                                  ),
-                                  value: _requestsPlacementTest,
-                                  activeColor: AppColors.primary,
-                                  onChanged: (val) => setState(() {
-                                    _requestsPlacementTest = val ?? false;
-                                  }),
+                                child: const Icon(Icons.school_outlined, color: AppColors.primary, size: 20),
+                              ),
+                              const SizedBox(width: 12),
+                              Text('2. Antecedentes Académicos', style: AppTypography.headlineMd(color: AppColors.onSurface)),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          AppTextField(
+                            label: 'Última Institución Educativa',
+                            hint: 'Ej. I.E. Pedro Paulet',
+                            controller: _lastSchoolController,
+                            prefixIcon: Icons.account_balance_outlined,
+                            validator: (val) => val == null || val.isEmpty ? 'Requerido' : null,
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Último Grado Aprobado',
+                                      style: AppTypography.labelLg(color: AppColors.onSurfaceVariant),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.surfaceContainerLowest,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: AppColors.outlineVariant),
+                                      ),
+                                      child: DropdownButtonHideUnderline(
+                                        child: DropdownButton<String>(
+                                          value: _selectedGrade,
+                                          isExpanded: true,
+                                          style: AppTypography.bodySm(color: AppColors.onSurface),
+                                          items: _gradesList.map((String value) {
+                                            return DropdownMenuItem<String>(
+                                              value: value,
+                                              child: Text(value),
+                                            );
+                                          }).toList(),
+                                          onChanged: (val) {
+                                            if (val != null) {
+                                              setState(() => _selectedGrade = val);
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: AppTextField(
+                                  label: 'Último Año de Estudio',
+                                  hint: 'Ej. 2021',
+                                  controller: _lastYearController,
+                                  keyboardType: TextInputType.number,
+                                  prefixIcon: Icons.calendar_month_outlined,
+                                  validator: (val) => val == null || val.isEmpty ? 'Requerido' : null,
                                 ),
                               ),
                             ],
-                            const SizedBox(height: 20),
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceContainerLowest,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppColors.outlineVariant),
+                            ),
+                            child: SwitchListTile(
+                              title: Text(
+                                'Llevo más de 2 años fuera del sistema educativo',
+                                style: AppTypography.labelLg(color: AppColors.onSurface),
+                              ),
+                              value: _hasLongAbsence,
+                              activeThumbColor: AppColors.primary,
+                              onChanged: (val) => setState(() {
+                                _hasLongAbsence = val;
+                                if (!val) _requestsPlacementTest = false;
+                              }),
+                            ),
+                          ),
+                          if (_hasLongAbsence) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryContainer.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: AppColors.primaryContainer),
+                              ),
+                              child: CheckboxListTile(
+                                title: Text(
+                                  'Solicitar Prueba de Ubicación',
+                                  style: AppTypography.labelLg(color: AppColors.onSurface),
+                                ),
+                                value: _requestsPlacementTest,
+                                activeColor: AppColors.primary,
+                                onChanged: (val) => setState(() {
+                                  _requestsPlacementTest = val ?? false;
+                                }),
+                              ),
+                            ),
+                          ],
+
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 24),
+                            child: Divider(height: 1, color: AppColors.outlineVariant),
+                          ),
+
+                          // SECCIÓN 3: Opciones Especiales
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryContainer.withValues(alpha: 0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.tune_rounded, color: AppColors.primary, size: 20),
+                              ),
+                              const SizedBox(width: 12),
+                              Text('3. Opciones Especiales', style: AppTypography.headlineMd(color: AppColors.onSurface)),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Modalidad de Estudio',
+                                style: AppTypography.labelLg(color: AppColors.onSurfaceVariant),
+                              ),
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceContainerLowest,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: AppColors.outlineVariant),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: _selectedStudyMode,
+                                    isExpanded: true,
+                                    style: AppTypography.bodySm(color: AppColors.onSurface),
+                                    items: _studyModesList.map((String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                    onChanged: (val) {
+                                      if (val != null) {
+                                        setState(() => _selectedStudyMode = val);
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceContainerLowest,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppColors.outlineVariant),
+                            ),
+                            child: Column(
+                              children: [
+                                SwitchListTile(
+                                  title: Text(
+                                    'Solicitar exoneración de Ed. Religiosa',
+                                    style: AppTypography.labelLg(color: AppColors.onSurface),
+                                  ),
+                                  value: _religionExemption,
+                                  activeThumbColor: AppColors.primary,
+                                  onChanged: (val) => setState(() => _religionExemption = val),
+                                ),
+                                const Divider(height: 1, color: AppColors.outlineVariant),
+                                SwitchListTile(
+                                  title: Text(
+                                    'Solicitar exoneración de Ed. Física',
+                                    style: AppTypography.labelLg(color: AppColors.onSurface),
+                                  ),
+                                  value: _peExemption,
+                                  activeThumbColor: AppColors.primary,
+                                  onChanged: (val) => setState(() => _peExemption = val),
+                                ),
+                                const Divider(height: 1, color: AppColors.outlineVariant),
+                                SwitchListTile(
+                                  title: Text(
+                                    'Tengo discapacidad certificada',
+                                    style: AppTypography.labelLg(color: AppColors.onSurface),
+                                  ),
+                                  value: _hasDisability,
+                                  activeThumbColor: AppColors.primary,
+                                  onChanged: (val) => setState(() => _hasDisability = val),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // SINGLE SAVE BUTTON (Shows if not saved yet)
+                          if (!state.isSpecialOptionsSubmitted) ...[
                             AppButton(
-                              label: 'Guardar Antecedentes Académicos',
-                              variant: AppButtonVariant.outlined,
+                              label: 'Guardar y Continuar a Documentos',
                               loading: state.isSubmitting,
                               onPressed: () {
                                 if (_formKey.currentState!.validate()) {
-                                  context.read<EnrollmentBloc>().add(SubmitAcademicData(
+                                  context.read<EnrollmentBloc>().add(SubmitFullEnrollmentData(
+                                        fullName: _nameController.text,
+                                        dni: _dniController.text,
+                                        phone: _phoneController.text,
+                                        age: _ageController.text,
+                                        cycle: _selectedCycle,
+                                        sex: _selectedSex,
+                                        birthDate: _birthDateController.text,
+                                        email: _emailController.text,
+                                        address: _addressController.text,
                                         lastSchool: _lastSchoolController.text,
                                         lastGradeCompleted: _selectedGrade,
                                         lastStudyYear: _lastYearController.text,
                                         hasLongAbsence: _hasLongAbsence,
                                         requestsPlacementTest: _requestsPlacementTest,
+                                        requestsReligionExemption: _religionExemption,
+                                        requestsPEExemption: _peExemption,
+                                        studyMode: _selectedStudyMode,
+                                        hasDisability: _hasDisability,
                                       ));
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text('¡Antecedentes académicos guardados correctamente!'),
+                                      content: Text('¡Datos de matrícula guardados con éxito!'),
                                       backgroundColor: Colors.green,
                                     ),
                                   );
@@ -638,131 +710,7 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                             ),
                           ],
 
-                          // Sección 3: Opciones Especiales
-                          if (state.isAcademicDataSubmitted) ...[
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 24),
-                              child: Divider(height: 1, color: AppColors.outlineVariant),
-                            ),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primaryContainer.withValues(alpha: 0.2),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(Icons.tune_rounded, color: AppColors.primary, size: 20),
-                                ),
-                                const SizedBox(width: 12),
-                                Text('3. Opciones Especiales', style: AppTypography.headlineMd(color: AppColors.onSurface)),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Modalidad de Estudio',
-                                  style: AppTypography.labelLg(color: AppColors.onSurfaceVariant),
-                                ),
-                                const SizedBox(height: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.surfaceContainerLowest,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: AppColors.outlineVariant),
-                                  ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<String>(
-                                      value: _selectedStudyMode,
-                                      isExpanded: true,
-                                      style: AppTypography.bodySm(color: AppColors.onSurface),
-                                      items: _studyModesList.map((String value) {
-                                        return DropdownMenuItem<String>(
-                                          value: value,
-                                          child: Text(value),
-                                        );
-                                      }).toList(),
-                                      onChanged: (val) {
-                                        if (val != null) {
-                                          setState(() => _selectedStudyMode = val);
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: AppColors.surfaceContainerLowest,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: AppColors.outlineVariant),
-                              ),
-                              child: Column(
-                                children: [
-                                  SwitchListTile(
-                                    title: Text(
-                                      'Solicitar exoneración de Ed. Religiosa',
-                                      style: AppTypography.labelLg(color: AppColors.onSurface),
-                                    ),
-                                    value: _religionExemption,
-                                    activeThumbColor: AppColors.primary,
-                                    onChanged: (val) => setState(() => _religionExemption = val),
-                                  ),
-                                  const Divider(height: 1, color: AppColors.outlineVariant),
-                                  SwitchListTile(
-                                    title: Text(
-                                      'Solicitar exoneración de Ed. Física',
-                                      style: AppTypography.labelLg(color: AppColors.onSurface),
-                                    ),
-                                    value: _peExemption,
-                                    activeThumbColor: AppColors.primary,
-                                    onChanged: (val) => setState(() => _peExemption = val),
-                                  ),
-                                  const Divider(height: 1, color: AppColors.outlineVariant),
-                                  SwitchListTile(
-                                    title: Text(
-                                      'Tengo discapacidad certificada',
-                                      style: AppTypography.labelLg(color: AppColors.onSurface),
-                                    ),
-                                    subtitle: Text(
-                                      'Se habilitará la subida de un documento de discapacidad adicional.',
-                                      style: AppTypography.bodySm(color: AppColors.onSurfaceVariant),
-                                    ),
-                                    value: _hasDisability,
-                                    activeThumbColor: AppColors.primary,
-                                    onChanged: (val) => setState(() => _hasDisability = val),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            AppButton(
-                              label: 'Guardar Opciones Especiales',
-                              variant: AppButtonVariant.outlined,
-                              loading: state.isSubmitting,
-                              onPressed: () {
-                                context.read<EnrollmentBloc>().add(SubmitSpecialOptions(
-                                      requestsReligionExemption: _religionExemption,
-                                      requestsPEExemption: _peExemption,
-                                      studyMode: _selectedStudyMode,
-                                      hasDisability: _hasDisability,
-                                    ));
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('¡Opciones especiales guardadas correctamente!'),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-
-                          // Sección 4: Documentos Obligatorios
+                          // SECCIÓN 4: Documentos Requeridos (Shows only after options are submitted)
                           if (state.isSpecialOptionsSubmitted) ...[
                             const Padding(
                               padding: EdgeInsets.symmetric(vertical: 24),
@@ -813,31 +761,21 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                               ),
                               const SizedBox(height: 16),
     
-                              // Document tiles
                               ...state.documents.map((doc) => _DocumentTile(
                                     doc: doc,
                                     isPersonalDataDone: state.isPersonalDataSubmitted,
                                     onTap: () {
-                                      if (!state.isPersonalDataSubmitted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Por favor, guarda tus Datos Personales primero.'),
-                                            backgroundColor: AppColors.error,
-                                          ),
-                                        );
-                                        return;
-                                      }
                                       context.push(AppRoutes.uploadDocuments, extra: doc);
                                     },
                                   )),
                               const SizedBox(height: 32),
                               AppButton(
-                                label: 'Ver Resumen y Confirmar',
-                                loading: state.isSubmitting,
-                                onPressed: isComplete && state.hasAvailableVacancy && state.isSpecialOptionsSubmitted
-                                    ? () => context.push(AppRoutes.enrollmentSummary)
-                                    : null,
-                              ),
+                                  label: 'Ver Resumen y Confirmar',
+                                  loading: state.isSubmitting,
+                                  onPressed: isComplete && state.hasAvailableVacancy && state.isSpecialOptionsSubmitted
+                                      ? () => context.push(AppRoutes.enrollmentSummary)
+                                      : null,
+                                ),
                             ],
                           ],
                           const SizedBox(height: 20),
