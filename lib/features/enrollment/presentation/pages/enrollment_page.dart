@@ -180,7 +180,6 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
           final bool allDocsUploaded = state.documents.every((d) => d.isUploaded);
           final bool isComplete = state.isSpecialOptionsSubmitted && allDocsUploaded;
           final bool hasUploadedAny = state.documents.any((d) => d.isUploaded);
-          final bool isWaitingVacancyApproval = state.enrollmentStatus == 'Pendiente' && !hasUploadedAny;
 
           return Scaffold(
             backgroundColor: AppColors.background,
@@ -732,105 +731,81 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                                 Text('4. Documentos Requeridos', style: AppTypography.headlineMd(color: AppColors.onSurface)),
                               ],
                             ),
-                            if (state.isPersonalDataSubmitted && isWaitingVacancyApproval) ...[
+                            if (state.observations.isNotEmpty && state.enrollmentStatus == 'Observado') ...[
                               Container(
-                                margin: const EdgeInsets.only(top: 16),
+                                margin: const EdgeInsets.only(bottom: 16),
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: AppColors.brandYellow.withValues(alpha: 0.15),
+                                  color: AppColors.errorContainer.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: AppColors.brandYellow, width: 1.5),
+                                  border: Border.all(color: AppColors.error, width: 1.5),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 24),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          'Tu expediente tiene observaciones:',
+                                          style: AppTypography.labelLg(color: AppColors.error).copyWith(fontWeight: FontWeight.bold),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      state.observations,
+                                      style: AppTypography.bodySm(color: AppColors.onErrorContainer),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            if (state.enrollmentStatus == 'En Revisión' || (state.enrollmentStatus == 'Pendiente' && hasUploadedAny)) ...[
+                              Container(
+                                margin: const EdgeInsets.only(bottom: 16),
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: Colors.blue, width: 1.5),
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.hourglass_top_rounded, color: AppColors.brandYellow, size: 24),
+                                    const Icon(Icons.info_outline_rounded, color: Colors.blue, size: 24),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Text(
-                                        'Tu solicitud de vacante está en estado: Pendiente. Una vez que sea aprobada por un administrador, se habilitará esta sección para que puedas subir tus documentos.',
-                                        style: AppTypography.bodySm(color: AppColors.onSurfaceVariant).copyWith(fontWeight: FontWeight.w600),
+                                        'Tu matrícula se encuentra en estado: ${state.enrollmentStatus}. El área académica está evaluando tu expediente y documentos.',
+                                        style: AppTypography.bodySm(color: Colors.blue[900]!).copyWith(fontWeight: FontWeight.w600),
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                            ] else ...[
-                              if (state.observations.isNotEmpty && state.enrollmentStatus == 'Observado') ...[
-                                Container(
-                                  margin: const EdgeInsets.only(bottom: 16),
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.errorContainer.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(color: AppColors.error, width: 1.5),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 24),
-                                          const SizedBox(width: 12),
-                                          Text(
-                                            'Tu expediente tiene observaciones:',
-                                            style: AppTypography.labelLg(color: AppColors.error).copyWith(fontWeight: FontWeight.bold),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        state.observations,
-                                        style: AppTypography.bodySm(color: AppColors.onErrorContainer),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                              if (state.enrollmentStatus == 'En Revisión' || (state.enrollmentStatus == 'Pendiente' && hasUploadedAny)) ...[
-                                Container(
-                                  margin: const EdgeInsets.only(bottom: 16),
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(color: Colors.blue, width: 1.5),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.info_outline_rounded, color: Colors.blue, size: 24),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
-                                          'Tu matrícula se encuentra en estado: ${state.enrollmentStatus}. El área académica está evaluando tu expediente y documentos.',
-                                          style: AppTypography.bodySm(color: Colors.blue[900]!).copyWith(fontWeight: FontWeight.w600),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                              Text(
-                                'Sube tus archivos oficiales en formato PDF o imagen. El peso máximo es de 5MB por archivo.',
-                                style: AppTypography.bodySm(color: AppColors.onSurfaceVariant),
-                              ),
-                              const SizedBox(height: 16),
-    
-                              ...state.documents.map((doc) => _DocumentTile(
-                                    doc: doc,
-                                    isPersonalDataDone: state.isPersonalDataSubmitted,
-                                    onTap: () {
-                                      context.push(AppRoutes.uploadDocuments, extra: doc);
-                                    },
-                                  )),
-                              const SizedBox(height: 32),
-                              AppButton(
-                                  label: 'Ver Resumen y Confirmar',
-                                  loading: state.isSubmitting,
-                                  onPressed: isComplete && state.hasAvailableVacancy && state.isSpecialOptionsSubmitted
-                                      ? () => context.push(AppRoutes.enrollmentSummary)
-                                      : null,
-                                ),
                             ],
+                            Text(
+                              'Sube tus archivos oficiales en formato PDF o imagen. El peso máximo es de 5MB por archivo.',
+                              style: AppTypography.bodySm(color: AppColors.onSurfaceVariant),
+                            ),
+                            const SizedBox(height: 16),
+    
+                            ...state.documents.map((doc) => _DocumentTile(
+                                  doc: doc,
+                                  isPersonalDataDone: state.isPersonalDataSubmitted,
+                                  onTap: () {
+                                    context.push(AppRoutes.uploadDocuments, extra: doc);
+                                  },
+                                )),
+                            const SizedBox(height: 32),
+                            AppButton(
+                                label: 'Ver Resumen y Confirmar',
+                                loading: state.isSubmitting,
+                                onPressed: isComplete && state.hasAvailableVacancy && state.isSpecialOptionsSubmitted
+                                    ? () => context.push(AppRoutes.enrollmentSummary)
+                                    : null,
+                              ),
                           ],
                           const SizedBox(height: 20),
                         ],
