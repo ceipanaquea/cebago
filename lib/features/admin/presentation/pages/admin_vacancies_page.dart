@@ -129,6 +129,26 @@ class _AdminVacanciesPageState extends State<AdminVacanciesPage> {
   }
 
   Widget _buildBody() {
+    return Column(
+      children: [
+        Container(
+          color: Colors.grey[200],
+          width: double.infinity,
+          padding: const EdgeInsets.all(8),
+          child: Text(
+            'Estado: ${_loading ? "Cargando" : "Listo"} | Error: ${_error ?? "Ninguno"} | Registros: ${_vacancies.length}',
+            style: const TextStyle(fontSize: 12, color: Colors.black87),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        Expanded(
+          child: _buildListOrStatus(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildListOrStatus() {
     if (_loading) {
       return const Center(
         child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(AppColors.brandYellow)),
