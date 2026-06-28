@@ -9,12 +9,14 @@ import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/jobs/presentation/pages/jobs_page.dart';
 import '../../features/enrollment/presentation/pages/enrollment_page.dart';
+import '../../features/enrollment/presentation/pages/enrollment_summary_page.dart';
 import '../../features/enrollment/presentation/pages/upload_documents_page.dart';
 import '../../features/enrollment/presentation/pages/enrollment_status_page.dart';
 import '../../features/enrollment/presentation/pages/enrollment_history_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/admin/presentation/pages/admin_panel_page.dart';
+import '../../features/admin/presentation/pages/admin_student_detail_page.dart';
 import '../../features/admin/presentation/pages/admin_vacancies_page.dart';
 import '../../features/admin/presentation/pages/admin_reports_page.dart';
 import '../../features/support/presentation/pages/support_page.dart';
@@ -29,12 +31,14 @@ class AppRoutes {
   static const String home = '/home';
   static const String jobs = '/jobs';
   static const String enrollment = '/enrollment';
+  static const String enrollmentSummary = '/enrollment/summary';
   static const String uploadDocuments = '/enrollment/upload';
   static const String enrollmentStatus = '/enrollment/status';
   static const String enrollmentHistory = '/enrollment/history';
   static const String notifications = '/notifications';
   static const String profile = '/profile';
   static const String adminPanel = '/admin';
+  static const String adminStudentDetail = '/admin/student/:id';
   static const String adminVacancies = '/admin-vacancies';
   static const String adminReports = '/admin/reports';
   static const String support = '/support';
@@ -90,6 +94,11 @@ class AppRouter {
             pageBuilder: (context, state) => _buildPage(state, const EnrollmentPage()),
           ),
           GoRoute(
+            path: AppRoutes.enrollmentSummary,
+            name: 'enrollmentSummary',
+            pageBuilder: (context, state) => _buildPage(state, const EnrollmentSummaryPage()),
+          ),
+          GoRoute(
             path: AppRoutes.uploadDocuments,
             name: 'uploadDocuments',
             pageBuilder: (context, state) => _buildPage(state, const UploadDocumentsPage()),
@@ -118,6 +127,14 @@ class AppRouter {
             path: AppRoutes.adminPanel,
             name: 'adminPanel',
             pageBuilder: (context, state) => _buildPage(state, const AdminPanelPage()),
+          ),
+          GoRoute(
+            path: '/admin/student/:id',
+            name: 'adminStudentDetail',
+            pageBuilder: (context, state) {
+              final req = state.extra as dynamic;
+              return _buildPage(state, AdminStudentDetailPage(request: req));
+            },
           ),
           GoRoute(
             path: AppRoutes.adminVacancies,

@@ -606,7 +606,7 @@ class _EnrollmentPageState extends State<EnrollmentPage> {
                                     style: AppTypography.bodySm(color: AppColors.onSurfaceVariant),
                                   ),
                                   value: _requestsPlacementTest,
-                                  activeThumbColor: AppColors.primary,
+                                  activeColor: AppColors.primary,
                                   onChanged: (val) => setState(() {
                                     _requestsPlacementTest = val ?? false;
                                   }),
