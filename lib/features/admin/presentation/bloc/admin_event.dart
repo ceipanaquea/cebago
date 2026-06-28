@@ -27,3 +27,61 @@ class RejectEnrollmentRequested extends AdminEvent {
   @override
   List<Object?> get props => [id, observaciones];
 }
+
+class FilterEnrollmentsRequested extends AdminEvent {
+  final String status;
+  final String mode;
+  const FilterEnrollmentsRequested({this.status = '', this.mode = ''});
+
+  @override
+  List<Object?> get props => [status, mode];
+}
+
+class AddObservationRequested extends AdminEvent {
+  final String matriculaId;
+  final String perfilId;
+  final String ticketCode;
+  final String observationText;
+
+  const AddObservationRequested({
+    required this.matriculaId,
+    required this.perfilId,
+    required this.ticketCode,
+    required this.observationText,
+  });
+
+  @override
+  List<Object?> get props => [matriculaId, perfilId, ticketCode, observationText];
+}
+
+class MarkUnderReviewRequested extends AdminEvent {
+  final String matriculaId;
+  final String perfilId;
+  final String ticketCode;
+
+  const MarkUnderReviewRequested({
+    required this.matriculaId,
+    required this.perfilId,
+    required this.ticketCode,
+  });
+
+  @override
+  List<Object?> get props => [matriculaId, perfilId, ticketCode];
+}
+
+class RejectEnrollmentDirectlyRequested extends AdminEvent {
+  final String matriculaId;
+  final String perfilId;
+  final String ticketCode;
+  final String reason;
+
+  const RejectEnrollmentDirectlyRequested({
+    required this.matriculaId,
+    required this.perfilId,
+    required this.ticketCode,
+    required this.reason,
+  });
+
+  @override
+  List<Object?> get props => [matriculaId, perfilId, ticketCode, reason];
+}

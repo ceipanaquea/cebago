@@ -8,6 +8,10 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     on<LoadAdminDataRequested>(_onLoadAdminData);
     on<ApproveEnrollmentRequested>(_onApproveEnrollment);
     on<RejectEnrollmentRequested>(_onRejectEnrollment);
+    on<FilterEnrollmentsRequested>(_onFilterEnrollments);
+    on<AddObservationRequested>(_onAddObservation);
+    on<MarkUnderReviewRequested>(_onMarkUnderReview);
+    on<RejectEnrollmentDirectlyRequested>(_onRejectDirectly);
   }
 
   final _supabase = Supabase.instance.client;
@@ -18,7 +22,6 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   ) async {
     emit(const AdminLoading());
     try {
-      // Administradores ven TODAS las matrículas (gracias a la política RLS de admin)
       final result = await _supabase
           .from('matriculas')
           .select('''
@@ -30,7 +33,18 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
             ciclo,
             estado,
             fecha_creacion,
-            perfil_id
+            perfil_id,
+            telefono,
+            email_contacto,
+            modalidad_estudio,
+            observaciones,
+            url_dni,
+            url_foto,
+            url_certificado_primaria,
+            url_certificado_secundaria,
+            url_doc_discapacidad,
+            tiene_discapacidad,
+            solicita_prueba_ubicacion
           ''')
           .order('fecha_creacion', ascending: false);
 
@@ -52,10 +66,20 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
           dni: mat['dni'] as String? ?? '',
           perfilId: mat['perfil_id'] as String? ?? '',
           matriculaId: mat['id'] as String,
+          phone: mat['telefono'] as String? ?? '',
+          email: mat['email_contacto'] as String? ?? '',
+          studyMode: mat['modalidad_estudio'] as String? ?? 'Presencial',
+          observations: mat['observaciones'] as String? ?? '',
+          urlDni: mat['url_dni'] as String? ?? '',
+          urlPhoto: mat['url_foto'] as String? ?? '',
+          urlCert: mat['url_certificado_primaria'] as String? ?? mat['url_certificado_secundaria'] as String? ?? '',
+          urlDisabilityDoc: mat['url_doc_discapacidad'] as String? ?? '',
+          hasDisability: mat['tiene_discapacidad'] as bool? ?? false,
+          requestsPlacementTest: mat['solicita_prueba_ubicacion'] as bool? ?? false,
         );
       }).toList();
 
-      _emitLoadedState(emit, requests);
+      _emitLoadedState(emit, requests, '', '');
     } catch (e) {
       emit(AdminError('Error al cargar solicitudes: ${e.toString()}'));
     }
@@ -68,25 +92,21 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     final currentState = state;
     if (currentState is AdminLoaded) {
       try {
-        // Encontrar la matrícula con ese código/id
         final request = currentState.requests.firstWhere(
           (r) => r.id == event.id,
           orElse: () => currentState.requests.first,
         );
 
-        // Actualizar en Supabase usando el matriculaId real
         await _supabase
             .from('matriculas')
             .update({'estado': 'Aprobado'})
             .eq('id', request.matriculaId.isNotEmpty ? request.matriculaId : event.id);
 
-        // Notificar al estudiante
         if (request.perfilId.isNotEmpty) {
           await _supabase.from('notificaciones').insert({
             'perfil_id': request.perfilId,
             'titulo': '¡Matrícula Aprobada! 🎉',
-            'mensaje':
-                'Tu solicitud de matrícula ${request.id} ha sido aprobada. ¡Bienvenido al CEBA Go!',
+            'mensaje': 'Tu solicitud de matrícula ${request.id} ha sido aprobada. ¡Bienvenido al CEBA Go!',
             'categoria': 'Matrícula',
             'leido': false,
           });
@@ -96,14 +116,13 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
           if (req.id == event.id) return req.copyWith(status: 'Aprobado');
           return req;
         }).toList();
-        _emitLoadedState(emit, updatedList);
+        _emitLoadedState(emit, updatedList, currentState.activeStatusFilter, currentState.activeModeFilter);
       } catch (e) {
-        // Actualizar localmente si falla la BD
         final updatedList = currentState.requests.map((req) {
           if (req.id == event.id) return req.copyWith(status: 'Aprobado');
           return req;
         }).toList();
-        _emitLoadedState(emit, updatedList);
+        _emitLoadedState(emit, updatedList, currentState.activeStatusFilter, currentState.activeModeFilter);
       }
     }
   }
@@ -128,38 +147,171 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
             })
             .eq('id', request.matriculaId.isNotEmpty ? request.matriculaId : event.id);
 
-        // Notificar al estudiante
         if (request.perfilId.isNotEmpty) {
           await _supabase.from('notificaciones').insert({
             'perfil_id': request.perfilId,
             'titulo': 'Matrícula Observada',
-            'mensaje':
-                'Tu solicitud ${request.id} necesita correcciones: ${event.observaciones ?? 'Revisa los documentos requeridos.'}',
+            'mensaje': 'Tu solicitud ${request.id} necesita correcciones: ${event.observaciones ?? 'Revisa los documentos requeridos.'}',
             'categoria': 'Matrícula',
             'leido': false,
           });
         }
 
         final updatedList = currentState.requests.map((req) {
-          if (req.id == event.id) return req.copyWith(status: 'Observado');
+          if (req.id == event.id) return req.copyWith(status: 'Observado', observations: event.observaciones);
           return req;
         }).toList();
-        _emitLoadedState(emit, updatedList);
+        _emitLoadedState(emit, updatedList, currentState.activeStatusFilter, currentState.activeModeFilter);
       } catch (e) {
         final updatedList = currentState.requests.map((req) {
-          if (req.id == event.id) return req.copyWith(status: 'Observado');
+          if (req.id == event.id) return req.copyWith(status: 'Observado', observations: event.observaciones);
           return req;
         }).toList();
-        _emitLoadedState(emit, updatedList);
+        _emitLoadedState(emit, updatedList, currentState.activeStatusFilter, currentState.activeModeFilter);
       }
     }
   }
 
-  void _emitLoadedState(Emitter<AdminState> emit, List<AdminEnrollmentRequest> list) {
+  Future<void> _onFilterEnrollments(
+    FilterEnrollmentsRequested event,
+    Emitter<AdminState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is AdminLoaded) {
+      _emitLoadedState(emit, currentState.requests, event.status, event.mode);
+    }
+  }
+
+  Future<void> _onAddObservation(
+    AddObservationRequested event,
+    Emitter<AdminState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is AdminLoaded) {
+      try {
+        await _supabase.from('matriculas').update({
+          'estado': 'Observado',
+          'observaciones': event.observationText,
+        }).eq('id', event.matriculaId);
+
+        if (event.perfilId.isNotEmpty) {
+          await _supabase.from('notificaciones').insert({
+            'perfil_id': event.perfilId,
+            'titulo': 'Matrícula Observada — Corrección Requerida',
+            'mensaje': 'Tu solicitud ${event.ticketCode} necesita correcciones: ${event.observationText}',
+            'categoria': 'Matrícula',
+            'leido': false,
+          });
+        }
+
+        final updatedList = currentState.requests.map((req) {
+          if (req.matriculaId == event.matriculaId) {
+            return req.copyWith(status: 'Observado', observations: event.observationText);
+          }
+          return req;
+        }).toList();
+        _emitLoadedState(emit, updatedList, currentState.activeStatusFilter, currentState.activeModeFilter);
+      } catch (e) {
+        final updatedList = currentState.requests.map((req) {
+          if (req.matriculaId == event.matriculaId) {
+            return req.copyWith(status: 'Observado', observations: event.observationText);
+          }
+          return req;
+        }).toList();
+        _emitLoadedState(emit, updatedList, currentState.activeStatusFilter, currentState.activeModeFilter);
+      }
+    }
+  }
+
+  Future<void> _onMarkUnderReview(
+    MarkUnderReviewRequested event,
+    Emitter<AdminState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is AdminLoaded) {
+      try {
+        await _supabase.from('matriculas').update({
+          'estado': 'En Revisión',
+        }).eq('id', event.matriculaId);
+
+        if (event.perfilId.isNotEmpty) {
+          await _supabase.from('notificaciones').insert({
+            'perfil_id': event.perfilId,
+            'titulo': 'Matrícula En Revisión 📋',
+            'mensaje': 'Tu solicitud ${event.ticketCode} está siendo evaluada por el área académica.',
+            'categoria': 'Matrícula',
+            'leido': false,
+          });
+        }
+
+        final updatedList = currentState.requests.map((req) {
+          if (req.matriculaId == event.matriculaId) return req.copyWith(status: 'En Revisión');
+          return req;
+        }).toList();
+        _emitLoadedState(emit, updatedList, currentState.activeStatusFilter, currentState.activeModeFilter);
+      } catch (e) {
+        final updatedList = currentState.requests.map((req) {
+          if (req.matriculaId == event.matriculaId) return req.copyWith(status: 'En Revisión');
+          return req;
+        }).toList();
+        _emitLoadedState(emit, updatedList, currentState.activeStatusFilter, currentState.activeModeFilter);
+      }
+    }
+  }
+
+  Future<void> _onRejectDirectly(
+    RejectEnrollmentDirectlyRequested event,
+    Emitter<AdminState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is AdminLoaded) {
+      try {
+        await _supabase.from('matriculas').update({
+          'estado': 'Rechazado',
+          'observaciones': event.reason,
+        }).eq('id', event.matriculaId);
+
+        if (event.perfilId.isNotEmpty) {
+          await _supabase.from('notificaciones').insert({
+            'perfil_id': event.perfilId,
+            'titulo': 'Matrícula Rechazada ❌',
+            'mensaje': 'Tu solicitud ${event.ticketCode} fue rechazada por el siguiente motivo: ${event.reason}',
+            'categoria': 'Matrícula',
+            'leido': false,
+          });
+        }
+
+        final updatedList = currentState.requests.map((req) {
+          if (req.matriculaId == event.matriculaId) {
+            return req.copyWith(status: 'Rechazado', observations: event.reason);
+          }
+          return req;
+        }).toList();
+        _emitLoadedState(emit, updatedList, currentState.activeStatusFilter, currentState.activeModeFilter);
+      } catch (e) {
+        final updatedList = currentState.requests.map((req) {
+          if (req.matriculaId == event.matriculaId) {
+            return req.copyWith(status: 'Rechazado', observations: event.reason);
+          }
+          return req;
+        }).toList();
+        _emitLoadedState(emit, updatedList, currentState.activeStatusFilter, currentState.activeModeFilter);
+      }
+    }
+  }
+
+  void _emitLoadedState(
+    Emitter<AdminState> emit,
+    List<AdminEnrollmentRequest> list,
+    String statusFilter,
+    String modeFilter,
+  ) {
     final total = list.length;
     final approved = list.where((r) => r.status == 'Aprobado').length;
     final pending = list.where((r) => r.status == 'Pendiente').length;
     final observed = list.where((r) => r.status == 'Observado').length;
+    final underReview = list.where((r) => r.status == 'En Revisión').length;
+    final rejected = list.where((r) => r.status == 'Rechazado').length;
 
     emit(AdminLoaded(
       stats: AdminStats(
@@ -167,8 +319,12 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
         approvedCount: approved,
         pendingCount: pending,
         observedCount: observed,
+        underReviewCount: underReview,
+        rejectedCount: rejected,
       ),
       requests: list,
+      activeStatusFilter: statusFilter,
+      activeModeFilter: modeFilter,
     ));
   }
 
