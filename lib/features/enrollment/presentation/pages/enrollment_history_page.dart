@@ -78,10 +78,14 @@ class _EnrollmentHistoryPageState extends State<EnrollmentHistoryPage> {
       case 'Finalizado':
         statusColor = Colors.green;
         break;
+      case 'En Revisión':
       case 'En Proceso':
-        statusColor = Colors.orange;
+        statusColor = Colors.blue;
         break;
       case 'Observado':
+        statusColor = AppColors.primary;
+        break;
+      case 'Rechazado':
         statusColor = AppColors.error;
         break;
       default:
@@ -141,13 +145,30 @@ class _EnrollmentHistoryPageState extends State<EnrollmentHistoryPage> {
             ),
             const SizedBox(height: 8),
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Icon(Icons.calendar_today_outlined, size: 14, color: AppColors.outline),
-                const SizedBox(width: 6),
-                Text(
-                  hst.date,
-                  style: AppTypography.bodySm(color: AppColors.onSurfaceVariant),
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_today_outlined, size: 14, color: AppColors.outline),
+                    const SizedBox(width: 6),
+                    Text(
+                      hst.date,
+                      style: AppTypography.bodySm(color: AppColors.onSurfaceVariant),
+                    ),
+                  ],
                 ),
+                if (hst.studyMode.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryContainer.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      hst.studyMode,
+                      style: AppTypography.labelXs(color: AppColors.primary),
+                    ),
+                  ),
               ],
             ),
             const SizedBox(height: 12),
