@@ -129,23 +129,7 @@ class _AdminVacanciesPageState extends State<AdminVacanciesPage> {
   }
 
   Widget _buildBody() {
-    return Column(
-      children: [
-        Container(
-          color: Colors.grey[200],
-          width: double.infinity,
-          padding: const EdgeInsets.all(8),
-          child: Text(
-            'Estado: ${_loading ? "Cargando" : "Listo"} | Error: ${_error ?? "Ninguno"} | Registros: ${_vacancies.length}',
-            style: const TextStyle(fontSize: 12, color: Colors.black87),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        Expanded(
-          child: _buildListOrStatus(),
-        ),
-      ],
-    );
+    return _buildListOrStatus();
   }
 
   Widget _buildListOrStatus() {
@@ -181,8 +165,14 @@ class _AdminVacanciesPageState extends State<AdminVacanciesPage> {
     }
     return RefreshIndicator(
       onRefresh: _loadVacancies,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(20),
+      child: GridView.builder(
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 0.72,
+        ),
         itemCount: _vacancies.length,
         itemBuilder: (context, index) {
           try {
@@ -196,13 +186,16 @@ class _AdminVacanciesPageState extends State<AdminVacanciesPage> {
             final disponibles = totales - ocupados;
 
             return Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: AppColors.surfaceContainerLowest,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
-                  BoxShadow(color: AppColors.shadow, blurRadius: 8, offset: const Offset(0, 4))
+                  BoxShadow(
+                    color: AppColors.shadow.withOpacity(0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  )
                 ],
               ),
               child: Column(
@@ -211,87 +204,125 @@ class _AdminVacanciesPageState extends State<AdminVacanciesPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: (ciclo.contains('Inicial') ? Colors.teal : Colors.deepPurple).withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          ciclo.contains('Inicial') ? 'Inicial / Intermedio' : 'Avanzado',
-                          style: AppTypography.labelXs(
-                            color: ciclo.contains('Inicial') ? Colors.teal[800] : Colors.deepPurple[800],
-                          ).copyWith(fontWeight: FontWeight.bold),
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: (ciclo.contains('Inicial') ? Colors.teal : Colors.deepPurple).withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            ciclo.contains('Inicial') ? 'Inicial' : 'Avanzado',
+                            style: AppTypography.labelXs(
+                              color: ciclo.contains('Inicial') ? Colors.teal[800]! : Colors.deepPurple[800]!,
+                            ).copyWith(fontSize: 9, fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 4),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                         decoration: BoxDecoration(
                           color: AppColors.surfaceContainerLow,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           modalidad,
-                          style: AppTypography.labelXs(color: AppColors.onSurfaceVariant),
+                          style: AppTypography.labelXs(color: AppColors.onSurfaceVariant).copyWith(fontSize: 9),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Text(titulo, style: AppTypography.headlineMd(color: AppColors.onSurface)),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: Text(
+                      titulo,
+                      style: AppTypography.bodyMd(color: AppColors.onSurface).copyWith(
+                        fontWeight: FontWeight.bold,
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Disponibles', style: AppTypography.labelSm(color: AppColors.outline)),
-                          const SizedBox(height: 4),
+                          Text(
+                            'Disp.',
+                            style: AppTypography.labelXs(color: AppColors.outline),
+                          ),
+                          const SizedBox(height: 2),
                           Text(
                             '$disponibles',
-                            style: AppTypography.headlineLg(
-                              color: disponibles > 0 ? Colors.green : AppColors.error,
-                            ),
+                            style: AppTypography.bodyLg(
+                              color: disponibles > 0 ? Colors.green[700]! : AppColors.error,
+                            ).copyWith(fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Totales', style: AppTypography.labelSm(color: AppColors.outline)),
-                          const SizedBox(height: 4),
+                          Text(
+                            'Total',
+                            style: AppTypography.labelXs(color: AppColors.outline),
+                          ),
+                          const SizedBox(height: 2),
                           Text(
                             '$totales',
-                            style: AppTypography.headlineLg(color: AppColors.primary),
+                            style: AppTypography.bodyLg(color: AppColors.primary).copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
                       ),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: AppColors.onPrimary,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                        icon: const Icon(Icons.edit_rounded, size: 16),
-                        label: const Text('Editar Cupos'),
-                        onPressed: () => _updateTotalCupos(id, totales),
-                      ),
                     ],
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 36,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.onPrimary,
+                        elevation: 0,
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onPressed: () => _updateTotalCupos(id, totales),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.edit_rounded, size: 14),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Cupos',
+                            style: AppTypography.labelXs(color: AppColors.onPrimary).copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
             );
           } catch (e) {
             return Card(
-              margin: const EdgeInsets.only(bottom: 16),
               color: Colors.red[50],
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(8),
                 child: Text(
-                  'Error render: $e',
-                  style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                  'Error: $e',
+                  style: const TextStyle(color: Colors.red, fontSize: 10),
                 ),
               ),
             );
