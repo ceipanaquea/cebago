@@ -22,6 +22,7 @@ class _AdminVacanciesPageState extends State<AdminVacanciesPage> {
   }
 
   Future<void> _loadVacancies() async {
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -32,11 +33,13 @@ class _AdminVacanciesPageState extends State<AdminVacanciesPage> {
           .select('id, titulo, ciclo_escolar, taller_tecnico, modalidad, cupos_totales, cupos_ocupados')
           .order('ciclo_escolar', ascending: true);
       
+      if (!mounted) return;
       setState(() {
         _vacancies = List<Map<String, dynamic>>.from(response);
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _loading = false;
@@ -79,16 +82,148 @@ class _AdminVacanciesPageState extends State<AdminVacanciesPage> {
     if (newTotal != null && newTotal > 0) {
       try {
         await Supabase.instance.client.from('vacantes').update({'cupos_totales': newTotal}).eq('id', id);
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Vacantes actualizadas correctamente.')),
         );
         _loadVacancies();
       } catch (e) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al actualizar: $e')),
         );
       }
     }
+  }
+
+  Future<void> _showCreateVacancyDialog() async {
+    final formKey = GlobalKey<FormState>();
+    final tituloController = TextEditingController();
+    final descripcionController = TextEditingController();
+    final cuposController = TextEditingController(text: '30');
+    final sedeController = TextEditingController(text: 'Sede Principal');
+    final tallerController = TextEditingController(text: 'General');
+
+    String selectedCiclo = 'Ciclo Avanzado';
+    String selectedModalidad = 'Presencial';
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text('Crear Nueva Vacante', style: AppTypography.headlineMd()),
+              content: SizedBox(
+                width: 400,
+                child: SingleChildScrollView(
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextFormField(
+                          controller: tituloController,
+                          decoration: const InputDecoration(labelText: 'Título de Vacante (Ej: Matemática I)'),
+                          validator: (val) => val == null || val.isEmpty ? 'Requerido' : null,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: descripcionController,
+                          decoration: const InputDecoration(labelText: 'Descripción'),
+                          maxLines: 2,
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          initialValue: selectedCiclo,
+                          decoration: const InputDecoration(labelText: 'Ciclo Escolar'),
+                          items: const [
+                            DropdownMenuItem(value: 'Ciclo Inicial / Intermedio', child: Text('Inicial / Intermedio')),
+                            DropdownMenuItem(value: 'Ciclo Avanzado', child: Text('Avanzado')),
+                          ],
+                          onChanged: (val) => setDialogState(() => selectedCiclo = val!),
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          initialValue: selectedModalidad,
+                          decoration: const InputDecoration(labelText: 'Modalidad'),
+                          items: const [
+                            DropdownMenuItem(value: 'Presencial', child: Text('Presencial')),
+                            DropdownMenuItem(value: 'Semi-presencial', child: Text('Semi-presencial')),
+                            DropdownMenuItem(value: 'A Distancia', child: Text('A Distancia')),
+                          ],
+                          onChanged: (val) => setDialogState(() => selectedModalidad = val!),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: tallerController,
+                          decoration: const InputDecoration(labelText: 'Taller Técnico / Especialidad'),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: sedeController,
+                          decoration: const InputDecoration(labelText: 'Sede'),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: cuposController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(labelText: 'Cupos Totales'),
+                          validator: (val) {
+                            if (val == null || val.isEmpty) return 'Requerido';
+                            final n = int.tryParse(val);
+                            if (n == null || n <= 0) return 'Debe ser mayor a 0';
+                            return null;
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (formKey.currentState!.validate()) {
+                      try {
+                        await Supabase.instance.client.from('vacantes').insert({
+                          'titulo': tituloController.text.trim(),
+                          'descripcion': descripcionController.text.trim(),
+                          'ciclo_escolar': selectedCiclo,
+                          'taller_tecnico': tallerController.text.trim(),
+                          'sede': sedeController.text.trim(),
+                          'modalidad': selectedModalidad,
+                          'cupos_totales': int.tryParse(cuposController.text.trim()) ?? 30,
+                          'cupos_ocupados': 0,
+                        });
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Vacante creada con éxito.')),
+                          );
+                        }
+                        _loadVacancies();
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error al crear vacante: $e')),
+                          );
+                        }
+                      }
+                    }
+                  },
+                  child: const Text('Crear'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -105,6 +240,11 @@ class _AdminVacanciesPageState extends State<AdminVacanciesPage> {
         centerTitle: true,
       ),
       body: _buildBody(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showCreateVacancyDialog,
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
     );
   }
 
