@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/router/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 
@@ -96,136 +98,6 @@ class _AdminVacanciesPageState extends State<AdminVacanciesPage> {
     }
   }
 
-  Future<void> _showCreateVacancyDialog() async {
-    final formKey = GlobalKey<FormState>();
-    final tituloController = TextEditingController();
-    final descripcionController = TextEditingController();
-    final cuposController = TextEditingController(text: '30');
-    final sedeController = TextEditingController(text: 'Sede Principal');
-    final tallerController = TextEditingController(text: 'General');
-
-    String selectedCiclo = 'Ciclo Avanzado';
-    String selectedModalidad = 'Presencial';
-
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text('Crear Nueva Vacante', style: AppTypography.headlineMd()),
-              content: SizedBox(
-                width: 400,
-                child: SingleChildScrollView(
-                  child: Form(
-                    key: formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextFormField(
-                          controller: tituloController,
-                          decoration: const InputDecoration(labelText: 'Título de Vacante (Ej: Matemática I)'),
-                          validator: (val) => val == null || val.isEmpty ? 'Requerido' : null,
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: descripcionController,
-                          decoration: const InputDecoration(labelText: 'Descripción'),
-                          maxLines: 2,
-                        ),
-                        const SizedBox(height: 12),
-                        DropdownButtonFormField<String>(
-                          initialValue: selectedCiclo,
-                          decoration: const InputDecoration(labelText: 'Ciclo Escolar'),
-                          items: const [
-                            DropdownMenuItem(value: 'Ciclo Inicial / Intermedio', child: Text('Inicial / Intermedio')),
-                            DropdownMenuItem(value: 'Ciclo Avanzado', child: Text('Avanzado')),
-                          ],
-                          onChanged: (val) => setDialogState(() => selectedCiclo = val!),
-                        ),
-                        const SizedBox(height: 12),
-                        DropdownButtonFormField<String>(
-                          initialValue: selectedModalidad,
-                          decoration: const InputDecoration(labelText: 'Modalidad'),
-                          items: const [
-                            DropdownMenuItem(value: 'Presencial', child: Text('Presencial')),
-                            DropdownMenuItem(value: 'Semi-presencial', child: Text('Semi-presencial')),
-                            DropdownMenuItem(value: 'A Distancia', child: Text('A Distancia')),
-                          ],
-                          onChanged: (val) => setDialogState(() => selectedModalidad = val!),
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: tallerController,
-                          decoration: const InputDecoration(labelText: 'Taller Técnico / Especialidad'),
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: sedeController,
-                          decoration: const InputDecoration(labelText: 'Sede'),
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: cuposController,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(labelText: 'Cupos Totales'),
-                          validator: (val) {
-                            if (val == null || val.isEmpty) return 'Requerido';
-                            final n = int.tryParse(val);
-                            if (n == null || n <= 0) return 'Debe ser mayor a 0';
-                            return null;
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancelar'),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (formKey.currentState!.validate()) {
-                      try {
-                        await Supabase.instance.client.from('vacantes').insert({
-                          'titulo': tituloController.text.trim(),
-                          'descripcion': descripcionController.text.trim(),
-                          'ciclo_escolar': selectedCiclo,
-                          'taller_tecnico': tallerController.text.trim(),
-                          'sede': sedeController.text.trim(),
-                          'modalidad': selectedModalidad,
-                          'cupos_totales': int.tryParse(cuposController.text.trim()) ?? 30,
-                          'cupos_ocupados': 0,
-                        });
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Vacante creada con éxito.')),
-                          );
-                        }
-                        _loadVacancies();
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error al crear vacante: $e')),
-                          );
-                        }
-                      }
-                    }
-                  },
-                  child: const Text('Crear'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -241,7 +113,12 @@ class _AdminVacanciesPageState extends State<AdminVacanciesPage> {
       ),
       body: _buildBody(),
       floatingActionButton: FloatingActionButton(
-        onPressed: _showCreateVacancyDialog,
+        onPressed: () async {
+          final result = await context.push(AppRoutes.adminCreateVacancy);
+          if (result == true) {
+            _loadVacancies();
+          }
+        },
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add, color: Colors.white),
       ),

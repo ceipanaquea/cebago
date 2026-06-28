@@ -18,6 +18,7 @@ import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/admin/presentation/pages/admin_panel_page.dart';
 import '../../features/admin/presentation/pages/admin_student_detail_page.dart';
 import '../../features/admin/presentation/pages/admin_vacancies_page.dart';
+import '../../features/admin/presentation/pages/admin_create_vacancy_page.dart';
 import '../../features/admin/presentation/pages/admin_reports_page.dart';
 import '../../features/support/presentation/pages/support_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
@@ -40,6 +41,7 @@ class AppRoutes {
   static const String adminPanel = '/admin';
   static const String adminStudentDetail = '/admin/student/:id';
   static const String adminVacancies = '/admin-vacancies';
+  static const String adminCreateVacancy = '/admin-vacancies/create';
   static const String adminReports = '/admin/reports';
   static const String support = '/support';
   static const String settings = '/settings';
@@ -140,6 +142,11 @@ class AppRouter {
             path: AppRoutes.adminVacancies,
             name: 'adminVacancies',
             pageBuilder: (context, state) => _buildPage(state, const AdminVacanciesPage()),
+          ),
+          GoRoute(
+            path: AppRoutes.adminCreateVacancy,
+            name: 'adminCreateVacancy',
+            pageBuilder: (context, state) => _buildPage(state, const AdminCreateVacancyPage()),
           ),
           GoRoute(
             path: AppRoutes.adminReports,
