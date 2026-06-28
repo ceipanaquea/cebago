@@ -18,26 +18,31 @@ class AppBottomNavBar extends StatelessWidget {
     final String location = GoRouterState.of(context).uri.toString();
     int activeIndex = 0;
 
+    bool matchRoute(String route, String currentLoc) {
+      if (route == '/') return currentLoc == '/';
+      return currentLoc == route || currentLoc.startsWith('$route/');
+    }
+
     if (isAdmin) {
-      if (location.startsWith(AppRoutes.home)) {
+      if (matchRoute(AppRoutes.home, location)) {
         activeIndex = 0;
-      } else if (location.startsWith(AppRoutes.adminPanel)) {
+      } else if (matchRoute(AppRoutes.adminVacancies, location)) {
+        activeIndex = 2; // Check vacancies first to prevent '/admin' prefix conflict
+      } else if (matchRoute(AppRoutes.adminPanel, location)) {
         activeIndex = 1;
-      } else if (location.startsWith(AppRoutes.adminVacancies)) {
-        activeIndex = 2;
-      } else if (location.startsWith(AppRoutes.adminReports)) {
+      } else if (matchRoute(AppRoutes.adminReports, location)) {
         activeIndex = 3;
-      } else if (location.startsWith(AppRoutes.profile)) {
+      } else if (matchRoute(AppRoutes.profile, location)) {
         activeIndex = 4;
       }
     } else {
-      if (location.startsWith(AppRoutes.home)) {
+      if (matchRoute(AppRoutes.home, location)) {
         activeIndex = 0;
       } else if (location.startsWith(AppRoutes.enrollment) || location.startsWith('/enrollment')) {
         activeIndex = 1;
-      } else if (location.startsWith(AppRoutes.jobs)) {
+      } else if (matchRoute(AppRoutes.jobs, location)) {
         activeIndex = 2;
-      } else if (location.startsWith(AppRoutes.profile)) {
+      } else if (matchRoute(AppRoutes.profile, location)) {
         activeIndex = 3;
       }
     }

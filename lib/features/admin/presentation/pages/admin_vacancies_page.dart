@@ -35,12 +35,15 @@ class _AdminVacanciesPageState extends State<AdminVacanciesPage> {
           .select('id, titulo, ciclo_escolar, taller_tecnico, modalidad, cupos_totales, cupos_ocupados')
           .order('ciclo_escolar', ascending: true);
       
+      debugPrint('VACANCIES RESPONSE RECEIVED: $response');
       if (!mounted) return;
       setState(() {
         _vacancies = List<Map<String, dynamic>>.from(response);
         _loading = false;
       });
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint('VACANCIES ERROR: $e');
+      debugPrint('VACANCIES STACK: $stack');
       if (!mounted) return;
       setState(() {
         _error = e.toString();
@@ -150,7 +153,10 @@ class _AdminVacanciesPageState extends State<AdminVacanciesPage> {
     }
     if (_vacancies.isEmpty) {
       return Center(
-        child: Text('No hay vacantes registradas.', style: AppTypography.bodySm()),
+        child: Text(
+          'No hay vacantes registradas.',
+          style: AppTypography.bodySm(color: AppColors.onSurfaceVariant),
+        ),
       );
     }
     return RefreshIndicator(
