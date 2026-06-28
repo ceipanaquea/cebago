@@ -3,7 +3,8 @@ import 'package:equatable/equatable.dart';
 class RequiredDocument extends Equatable {
   final String id;
   final String name;
-  final String type; // 'dni', 'primary', 'secondary', 'photo'
+  // types: 'dni', 'primary', 'secondary', 'photo', 'birth_cert', 'disability_doc'
+  final String type;
   final bool isUploaded;
   final String? uploadedFileName;
   final String status; // 'Pendiente', 'En revisión', 'Aprobado', 'Rechazado'
@@ -40,9 +41,10 @@ class HistoricalEnrollment extends Equatable {
   final String id;
   final String cycle;
   final String year;
-  final String status; // 'Aprobado', 'En Proceso', 'Observado', 'Finalizado'
+  final String status; // 'Aprobado', 'En Proceso', 'Observado', 'Finalizado', 'Rechazado'
   final String date;
   final String remarks;
+  final String studyMode;
 
   const HistoricalEnrollment({
     required this.id,
@@ -51,10 +53,11 @@ class HistoricalEnrollment extends Equatable {
     required this.status,
     required this.date,
     required this.remarks,
+    this.studyMode = '',
   });
 
   @override
-  List<Object?> get props => [id, cycle, year, status, date, remarks];
+  List<Object?> get props => [id, cycle, year, status, date, remarks, studyMode];
 }
 
 abstract class EnrollmentState extends Equatable {
@@ -73,6 +76,7 @@ class EnrollmentLoading extends EnrollmentState {
 }
 
 class EnrollmentActiveState extends EnrollmentState {
+  // ── Existing personal fields ─────────────────────────────────────────────
   final String fullName;
   final String dni;
   final String phone;
@@ -86,7 +90,32 @@ class EnrollmentActiveState extends EnrollmentState {
   final int availableVacanciesCount;
   final String enrollmentStatus;
 
+  // ── New CEBA personal fields ─────────────────────────────────────────────
+  final String sex;        // 'Masculino' | 'Femenino' | 'Otro'
+  final String birthDate;  // 'YYYY-MM-DD' or 'DD/MM/AAAA'
+  final String email;
+  final String address;
+
+  // ── New CEBA academic fields ──────────────────────────────────────────────
+  final String lastSchool;
+  final String lastGradeCompleted;
+  final String lastStudyYear;
+  final bool hasLongAbsence;
+  final bool requestsPlacementTest;
+  final bool isAcademicDataSubmitted;
+
+  // ── New CEBA special options ──────────────────────────────────────────────
+  final bool requestsReligionExemption;
+  final bool requestsPEExemption;
+  final String studyMode;  // 'Presencial' | 'Semi-presencial' | 'A Distancia'
+  final bool hasDisability;
+  final bool isSpecialOptionsSubmitted;
+
+  // ── Admin observations ────────────────────────────────────────────────────
+  final String observations;
+
   const EnrollmentActiveState({
+    // Existing
     this.fullName = '',
     this.dni = '',
     this.phone = '',
@@ -99,6 +128,26 @@ class EnrollmentActiveState extends EnrollmentState {
     this.hasAvailableVacancy = true,
     this.availableVacanciesCount = 0,
     this.enrollmentStatus = 'Sin matrícula',
+    // New personal
+    this.sex = 'Masculino',
+    this.birthDate = '',
+    this.email = '',
+    this.address = '',
+    // New academic
+    this.lastSchool = '',
+    this.lastGradeCompleted = '',
+    this.lastStudyYear = '',
+    this.hasLongAbsence = false,
+    this.requestsPlacementTest = false,
+    this.isAcademicDataSubmitted = false,
+    // New special options
+    this.requestsReligionExemption = false,
+    this.requestsPEExemption = false,
+    this.studyMode = 'Presencial',
+    this.hasDisability = false,
+    this.isSpecialOptionsSubmitted = false,
+    // Admin
+    this.observations = '',
   });
 
   EnrollmentActiveState copyWith({
@@ -114,6 +163,26 @@ class EnrollmentActiveState extends EnrollmentState {
     bool? hasAvailableVacancy,
     int? availableVacanciesCount,
     String? enrollmentStatus,
+    // New personal
+    String? sex,
+    String? birthDate,
+    String? email,
+    String? address,
+    // New academic
+    String? lastSchool,
+    String? lastGradeCompleted,
+    String? lastStudyYear,
+    bool? hasLongAbsence,
+    bool? requestsPlacementTest,
+    bool? isAcademicDataSubmitted,
+    // New special options
+    bool? requestsReligionExemption,
+    bool? requestsPEExemption,
+    String? studyMode,
+    bool? hasDisability,
+    bool? isSpecialOptionsSubmitted,
+    // Admin
+    String? observations,
   }) {
     return EnrollmentActiveState(
       fullName: fullName ?? this.fullName,
@@ -128,23 +197,36 @@ class EnrollmentActiveState extends EnrollmentState {
       hasAvailableVacancy: hasAvailableVacancy ?? this.hasAvailableVacancy,
       availableVacanciesCount: availableVacanciesCount ?? this.availableVacanciesCount,
       enrollmentStatus: enrollmentStatus ?? this.enrollmentStatus,
+      sex: sex ?? this.sex,
+      birthDate: birthDate ?? this.birthDate,
+      email: email ?? this.email,
+      address: address ?? this.address,
+      lastSchool: lastSchool ?? this.lastSchool,
+      lastGradeCompleted: lastGradeCompleted ?? this.lastGradeCompleted,
+      lastStudyYear: lastStudyYear ?? this.lastStudyYear,
+      hasLongAbsence: hasLongAbsence ?? this.hasLongAbsence,
+      requestsPlacementTest: requestsPlacementTest ?? this.requestsPlacementTest,
+      isAcademicDataSubmitted: isAcademicDataSubmitted ?? this.isAcademicDataSubmitted,
+      requestsReligionExemption: requestsReligionExemption ?? this.requestsReligionExemption,
+      requestsPEExemption: requestsPEExemption ?? this.requestsPEExemption,
+      studyMode: studyMode ?? this.studyMode,
+      hasDisability: hasDisability ?? this.hasDisability,
+      isSpecialOptionsSubmitted: isSpecialOptionsSubmitted ?? this.isSpecialOptionsSubmitted,
+      observations: observations ?? this.observations,
     );
   }
 
   @override
   List<Object?> get props => [
-        fullName,
-        dni,
-        phone,
-        age,
-        cycle,
+        fullName, dni, phone, age, cycle,
         isPersonalDataSubmitted,
-        documents,
-        overallProgress,
-        isSubmitting,
-        hasAvailableVacancy,
-        availableVacanciesCount,
-        enrollmentStatus,
+        documents, overallProgress, isSubmitting,
+        hasAvailableVacancy, availableVacanciesCount, enrollmentStatus,
+        sex, birthDate, email, address,
+        lastSchool, lastGradeCompleted, lastStudyYear,
+        hasLongAbsence, requestsPlacementTest, isAcademicDataSubmitted,
+        requestsReligionExemption, requestsPEExemption, studyMode,
+        hasDisability, isSpecialOptionsSubmitted, observations,
       ];
 }
 

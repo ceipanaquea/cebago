@@ -11,12 +11,18 @@ class LoadEnrollmentDetails extends EnrollmentEvent {
   const LoadEnrollmentDetails();
 }
 
+/// Step 1 — Personal data + extended personal fields.
 class SubmitPersonalData extends EnrollmentEvent {
   final String fullName;
   final String dni;
   final String phone;
   final String age;
   final String cycle;
+  // New CEBA personal fields
+  final String sex;       // 'Masculino' | 'Femenino' | 'Otro'
+  final String birthDate; // 'DD/MM/AAAA' (stored as date after parsing)
+  final String email;
+  final String address;
 
   const SubmitPersonalData({
     required this.fullName,
@@ -24,16 +30,60 @@ class SubmitPersonalData extends EnrollmentEvent {
     required this.phone,
     required this.age,
     required this.cycle,
+    this.sex = 'Masculino',
+    this.birthDate = '',
+    this.email = '',
+    this.address = '',
   });
 
   @override
-  List<Object?> get props => [fullName, dni, phone, age, cycle];
+  List<Object?> get props => [fullName, dni, phone, age, cycle, sex, birthDate, email, address];
 }
 
+/// Step 2 — Academic background.
+class SubmitAcademicData extends EnrollmentEvent {
+  final String lastSchool;
+  final String lastGradeCompleted;
+  final String lastStudyYear;
+  final bool hasLongAbsence;
+  final bool requestsPlacementTest;
+
+  const SubmitAcademicData({
+    required this.lastSchool,
+    required this.lastGradeCompleted,
+    required this.lastStudyYear,
+    required this.hasLongAbsence,
+    required this.requestsPlacementTest,
+  });
+
+  @override
+  List<Object?> get props => [lastSchool, lastGradeCompleted, lastStudyYear, hasLongAbsence, requestsPlacementTest];
+}
+
+/// Step 3 — Special options (exemptions, study mode, disability).
+class SubmitSpecialOptions extends EnrollmentEvent {
+  final bool requestsReligionExemption;
+  final bool requestsPEExemption;
+  final String studyMode; // 'Presencial' | 'Semi-presencial' | 'A Distancia'
+  final bool hasDisability;
+
+  const SubmitSpecialOptions({
+    required this.requestsReligionExemption,
+    required this.requestsPEExemption,
+    required this.studyMode,
+    required this.hasDisability,
+  });
+
+  @override
+  List<Object?> get props => [requestsReligionExemption, requestsPEExemption, studyMode, hasDisability];
+}
+
+/// Upload a specific document file.
 class UploadDocumentFile extends EnrollmentEvent {
-  final String documentType; // 'dni', 'primary', 'secondary', 'photo'
+  // types: 'dni', 'primary', 'secondary', 'photo', 'birth_cert', 'disability_doc'
+  final String documentType;
   final String fileName;
-  final String? filePath; // Ruta real del archivo si está disponible
+  final String? filePath; // Real file path if available
 
   const UploadDocumentFile({
     required this.documentType,
@@ -45,6 +95,7 @@ class UploadDocumentFile extends EnrollmentEvent {
   List<Object?> get props => [documentType, fileName, filePath];
 }
 
+/// Final submission after all steps are complete.
 class SubmitEnrollment extends EnrollmentEvent {
   const SubmitEnrollment();
 }
@@ -60,4 +111,3 @@ class ChangeEnrollmentCycle extends EnrollmentEvent {
   @override
   List<Object?> get props => [cycle];
 }
-
