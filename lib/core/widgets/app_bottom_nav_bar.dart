@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_state.dart';
 
@@ -20,16 +21,25 @@ class AppBottomNavBar extends StatelessWidget {
     if (isAdmin) {
       if (location.startsWith(AppRoutes.home)) {
         activeIndex = 0;
-      } else if (location.startsWith(AppRoutes.adminPanel)) activeIndex = 1;
-      else if (location.startsWith(AppRoutes.adminVacancies)) activeIndex = 2;
-      else if (location.startsWith(AppRoutes.adminReports)) activeIndex = 3;
-      else if (location.startsWith(AppRoutes.profile)) activeIndex = 4;
+      } else if (location.startsWith(AppRoutes.adminPanel)) {
+        activeIndex = 1;
+      } else if (location.startsWith(AppRoutes.adminVacancies)) {
+        activeIndex = 2;
+      } else if (location.startsWith(AppRoutes.adminReports)) {
+        activeIndex = 3;
+      } else if (location.startsWith(AppRoutes.profile)) {
+        activeIndex = 4;
+      }
     } else {
       if (location.startsWith(AppRoutes.home)) {
         activeIndex = 0;
-      } else if (location.startsWith(AppRoutes.enrollment) || location.startsWith('/enrollment')) activeIndex = 1;
-      else if (location.startsWith(AppRoutes.jobs)) activeIndex = 2;
-      else if (location.startsWith(AppRoutes.profile)) activeIndex = 3;
+      } else if (location.startsWith(AppRoutes.enrollment) || location.startsWith('/enrollment')) {
+        activeIndex = 1;
+      } else if (location.startsWith(AppRoutes.jobs)) {
+        activeIndex = 2;
+      } else if (location.startsWith(AppRoutes.profile)) {
+        activeIndex = 3;
+      }
     }
 
     return Container(
@@ -46,39 +56,53 @@ class AppBottomNavBar extends StatelessWidget {
       child: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: activeIndex,
+        backgroundColor: AppColors.surfaceContainerLowest,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.outline,
+        selectedLabelStyle: AppTypography.labelXs(color: AppColors.primary).copyWith(fontWeight: FontWeight.bold),
+        unselectedLabelStyle: AppTypography.labelXs(color: AppColors.outline),
+        elevation: 0,
         onTap: (i) {
           if (i == activeIndex) return;
           if (isAdmin) {
             if (i == 0) {
               context.go(AppRoutes.home);
-            } else if (i == 1) context.go(AppRoutes.adminPanel);
-            else if (i == 2) context.go(AppRoutes.adminVacancies);
-            else if (i == 3) context.go(AppRoutes.adminReports);
-            else if (i == 4) context.go(AppRoutes.profile);
+            } else if (i == 1) {
+              context.go(AppRoutes.adminPanel);
+            } else if (i == 2) {
+              context.go(AppRoutes.adminVacancies);
+            } else if (i == 3) {
+              context.go(AppRoutes.adminReports);
+            } else if (i == 4) {
+              context.go(AppRoutes.profile);
+            }
           } else {
             if (i == 0) {
               context.go(AppRoutes.home);
-            } else if (i == 1) context.go(AppRoutes.enrollment);
-            else if (i == 2) context.go(AppRoutes.jobs);
-            else if (i == 3) context.go(AppRoutes.profile);
+            } else if (i == 1) {
+              context.go(AppRoutes.enrollment);
+            } else if (i == 2) {
+              context.go(AppRoutes.jobs);
+            } else if (i == 3) {
+              context.go(AppRoutes.profile);
+            }
           }
         },
         items: isAdmin 
         ? const [
             BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home_rounded), label: 'Inicio'),
             BottomNavigationBarItem(icon: Icon(Icons.admin_panel_settings_outlined), activeIcon: Icon(Icons.admin_panel_settings_rounded), label: 'Panel'),
-            BottomNavigationBarItem(icon: Icon(Icons.work_outline), activeIcon: Icon(Icons.work_rounded), label: 'Vacantes'),
+            BottomNavigationBarItem(icon: Icon(Icons.class_outlined), activeIcon: Icon(Icons.class_rounded), label: 'Vacantes'),
             BottomNavigationBarItem(icon: Icon(Icons.analytics_outlined), activeIcon: Icon(Icons.analytics_rounded), label: 'Reportes'),
             BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person_rounded), label: 'Perfil'),
           ]
         : const [
             BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home_rounded), label: 'Inicio'),
             BottomNavigationBarItem(icon: Icon(Icons.school_outlined), activeIcon: Icon(Icons.school_rounded), label: 'Matrícula'),
-            BottomNavigationBarItem(icon: Icon(Icons.work_outline), activeIcon: Icon(Icons.work_rounded), label: 'Vacantes'),
+            BottomNavigationBarItem(icon: Icon(Icons.work_outline), activeIcon: Icon(Icons.work_rounded), label: 'Bolsa'),
             BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person_rounded), label: 'Perfil'),
           ],
       ),
     );
   }
 }
-
