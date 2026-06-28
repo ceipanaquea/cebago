@@ -185,103 +185,117 @@ class _AdminVacanciesPageState extends State<AdminVacanciesPage> {
         padding: const EdgeInsets.all(20),
         itemCount: _vacancies.length,
         itemBuilder: (context, index) {
-          final vac = _vacancies[index];
-          final id = vac['id'] as String;
-          final titulo = vac['titulo'] as String? ?? 'Taller';
-          final ciclo = vac['ciclo_escolar'] as String? ?? 'Desconocido';
-          final modalidad = vac['modalidad'] as String? ?? 'Presencial';
-          final totales = (vac['cupos_totales'] as num?)?.toInt() ?? 0;
-          final ocupados = (vac['cupos_ocupados'] as num?)?.toInt() ?? 0;
-          final disponibles = totales - ocupados;
+          try {
+            final vac = _vacancies[index];
+            final id = vac['id'] as String;
+            final titulo = vac['titulo'] as String? ?? 'Taller';
+            final ciclo = vac['ciclo_escolar'] as String? ?? 'Desconocido';
+            final modalidad = vac['modalidad'] as String? ?? 'Presencial';
+            final totales = (vac['cupos_totales'] as num?)?.toInt() ?? 0;
+            final ocupados = (vac['cupos_ocupados'] as num?)?.toInt() ?? 0;
+            final disponibles = totales - ocupados;
 
-          return Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerLowest,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(color: AppColors.shadow, blurRadius: 8, offset: const Offset(0, 4))
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: (ciclo.contains('Inicial') ? Colors.teal : Colors.deepPurple).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(color: AppColors.shadow, blurRadius: 8, offset: const Offset(0, 4))
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: (ciclo.contains('Inicial') ? Colors.teal : Colors.deepPurple).withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          ciclo.contains('Inicial') ? 'Inicial / Intermedio' : 'Avanzado',
+                          style: AppTypography.labelXs(
+                            color: ciclo.contains('Inicial') ? Colors.teal[800] : Colors.deepPurple[800],
+                          ).copyWith(fontWeight: FontWeight.bold),
+                        ),
                       ),
-                      child: Text(
-                        ciclo.contains('Inicial') ? 'Inicial / Intermedio' : 'Avanzado',
-                        style: AppTypography.labelXs(
-                          color: ciclo.contains('Inicial') ? Colors.teal[800] : Colors.deepPurple[800],
-                        ).copyWith(fontWeight: FontWeight.bold),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          modalidad,
+                          style: AppTypography.labelXs(color: AppColors.onSurfaceVariant),
+                        ),
                       ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        modalidad,
-                        style: AppTypography.labelXs(color: AppColors.onSurfaceVariant),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(titulo, style: AppTypography.headlineMd(color: AppColors.onSurface)),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Disponibles', style: AppTypography.labelSm(color: AppColors.outline)),
-                        const SizedBox(height: 4),
-                        Text(
-                          '$disponibles',
-                          style: AppTypography.headlineLg(
-                            color: disponibles > 0 ? Colors.green : AppColors.error,
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(titulo, style: AppTypography.headlineMd(color: AppColors.onSurface)),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Disponibles', style: AppTypography.labelSm(color: AppColors.outline)),
+                          const SizedBox(height: 4),
+                          Text(
+                            '$disponibles',
+                            style: AppTypography.headlineLg(
+                              color: disponibles > 0 ? Colors.green : AppColors.error,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Totales', style: AppTypography.labelSm(color: AppColors.outline)),
-                        const SizedBox(height: 4),
-                        Text(
-                          '$totales',
-                          style: AppTypography.headlineLg(color: AppColors.primary),
-                        ),
-                      ],
-                    ),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.onPrimary,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ],
                       ),
-                      icon: const Icon(Icons.edit_rounded, size: 16),
-                      label: const Text('Editar Cupos'),
-                      onPressed: () => _updateTotalCupos(id, totales),
-                    ),
-                  ],
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Totales', style: AppTypography.labelSm(color: AppColors.outline)),
+                          const SizedBox(height: 4),
+                          Text(
+                            '$totales',
+                            style: AppTypography.headlineLg(color: AppColors.primary),
+                          ),
+                        ],
+                      ),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.onPrimary,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        icon: const Icon(Icons.edit_rounded, size: 16),
+                        label: const Text('Editar Cupos'),
+                        onPressed: () => _updateTotalCupos(id, totales),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          } catch (e) {
+            return Card(
+              margin: const EdgeInsets.only(bottom: 16),
+              color: Colors.red[50],
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Error render: $e',
+                  style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
                 ),
-              ],
-            ),
-          );
+              ),
+            );
+          }
         },
       ),
     );
