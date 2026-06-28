@@ -15,6 +15,7 @@ class EnrollmentBloc extends Bloc<EnrollmentEvent, EnrollmentState> {
     on<SubmitEnrollment>(_onSubmitEnrollment);
     on<LoadEnrollmentHistory>(_onLoadHistory);
     on<ChangeEnrollmentCycle>(_onChangeCycle);
+    on<SubmitFullEnrollmentData>(_onSubmitFullEnrollmentData);
   }
 
   final _supabase = Supabase.instance.client;
@@ -719,6 +720,126 @@ class EnrollmentBloc extends Bloc<EnrollmentEvent, EnrollmentState> {
       hasAvailableVacancy: hasAvailableVacancy,
       availableVacanciesCount: availableCount,
     ));
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // SUBMIT FULL ENROLLMENT DATA (Consolidated Personal + Academic + Options)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  Future<void> _onSubmitFullEnrollmentData(
+    SubmitFullEnrollmentData event,
+    Emitter<EnrollmentState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is! EnrollmentActiveState) return;
+
+    emit(currentState.copyWith(isSubmitting: true));
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) {
+        emit(currentState.copyWith(isSubmitting: false));
+        return;
+      }
+
+      final parts = event.fullName.trim().split(' ');
+      final nombres = parts.isNotEmpty ? parts.first : event.fullName;
+      final apellidos = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+
+      String? birthDateDb;
+      if (event.birthDate.isNotEmpty && event.birthDate.contains('/')) {
+        final dateParts = event.birthDate.split('/');
+        if (dateParts.length == 3) {
+          birthDateDb = '${dateParts[2]}-${dateParts[1]}-${dateParts[0]}';
+        }
+      } else if (event.birthDate.isNotEmpty) {
+        birthDateDb = event.birthDate;
+      }
+
+      final enrollmentData = {
+        'nombres': nombres,
+        'apellidos': apellidos,
+        'dni': event.dni,
+        'telefono': event.phone,
+        'edad': int.tryParse(event.age) ?? 18,
+        'ciclo': event.cycle,
+        'sexo': event.sex,
+        'fecha_nacimiento': birthDateDb,
+        'email_contacto': event.email.isNotEmpty ? event.email : null,
+        'direccion': event.address.isNotEmpty ? event.address : null,
+        'ultima_institucion': event.lastSchool,
+        'ultimo_grado': event.lastGradeCompleted,
+        'ultimo_anio_estudio': int.tryParse(event.lastStudyYear) ?? 0,
+        'tiene_ausencia_larga': event.hasLongAbsence,
+        'solicita_prueba_ubicacion': event.requestsPlacementTest,
+        'exencion_religion': event.requestsReligionExemption,
+        'exencion_educacion_fisica': event.requestsPEExemption,
+        'modalidad_estudio': event.studyMode,
+        'tiene_discapacidad': event.hasDisability,
+      };
+
+      if (_matriculaId != null) {
+        await _supabase.from('matriculas').update(enrollmentData).eq('id', _matriculaId!);
+      } else {
+        final randomNum = Random().nextInt(9000) + 1000;
+        final ticketCode = 'MAT-2026-${randomNum.toRadixString(16).toUpperCase()}';
+
+        final result = await _supabase.from('matriculas').insert({
+          'perfil_id': userId,
+          'codigo_ticket': ticketCode,
+          ...enrollmentData,
+          'estado': 'Pendiente',
+        }).select('id').single();
+
+        _matriculaId = result['id'] as String?;
+      }
+
+      // Dynamic disability doc update
+      List<RequiredDocument> docs = currentState.documents;
+      if (event.hasDisability && !docs.any((d) => d.type == 'disability_doc')) {
+        docs = [
+          ...docs,
+          const RequiredDocument(
+            id: 'd6',
+            name: 'Certificado / Carnet de Discapacidad (CONADIS u equivalente)',
+            type: 'disability_doc',
+          ),
+        ];
+      } else if (!event.hasDisability) {
+        docs = docs.where((d) => d.type != 'disability_doc').toList();
+      }
+
+      final uploadedCount = docs.where((d) => d.isUploaded).length.toDouble();
+      final docsProgress = (uploadedCount / docs.length) * 0.70;
+
+      emit(currentState.copyWith(
+        fullName: event.fullName,
+        dni: event.dni,
+        phone: event.phone,
+        age: event.age,
+        cycle: event.cycle,
+        sex: event.sex,
+        birthDate: event.birthDate,
+        email: event.email,
+        address: event.address,
+        lastSchool: event.lastSchool,
+        lastGradeCompleted: event.lastGradeCompleted,
+        lastStudyYear: event.lastStudyYear,
+        hasLongAbsence: event.hasLongAbsence,
+        requestsPlacementTest: event.requestsPlacementTest,
+        requestsReligionExemption: event.requestsReligionExemption,
+        requestsPEExemption: event.requestsPEExemption,
+        studyMode: event.studyMode,
+        hasDisability: event.hasDisability,
+        documents: docs,
+        isPersonalDataSubmitted: true,
+        isAcademicDataSubmitted: true,
+        isSpecialOptionsSubmitted: true,
+        overallProgress: 0.30 + docsProgress,
+        isSubmitting: false,
+      ));
+    } catch (e) {
+      emit(currentState.copyWith(isSubmitting: false));
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────

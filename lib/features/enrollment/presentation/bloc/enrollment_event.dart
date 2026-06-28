@@ -111,3 +111,67 @@ class ChangeEnrollmentCycle extends EnrollmentEvent {
   @override
   List<Object?> get props => [cycle];
 }
+
+class SubmitFullEnrollmentData extends EnrollmentEvent {
+  final String fullName;
+  final String dni;
+  final String phone;
+  final String age;
+  final String cycle;
+  final String sex;
+  final String birthDate;
+  final String email;
+  final String address;
+  final String lastSchool;
+  final String lastGradeCompleted;
+  final String lastStudyYear;
+  final bool hasLongAbsence;
+  final bool requestsPlacementTest;
+  final bool requestsReligionExemption;
+  final bool requestsPEExemption;
+  final String studyMode;
+  final bool hasDisability;
+
+  const SubmitFullEnrollmentData({
+    required this.fullName,
+    required this.dni,
+    required this.phone,
+    required this.age,
+    required this.cycle,
+    required this.sex,
+    required this.birthDate,
+    required this.email,
+    required this.address,
+    required this.lastSchool,
+    required this.lastGradeCompleted,
+    required this.lastStudyYear,
+    required this.hasLongAbsence,
+    required this.requestsPlacementTest,
+    required this.requestsReligionExemption,
+    required this.requestsPEExemption,
+    required this.studyMode,
+    required this.hasDisability,
+  });
+
+  @override
+  List<Object?> get props => [
+        fullName,
+        dni,
+        phone,
+        age,
+        cycle,
+        sex,
+        birthDate,
+        email,
+        address,
+        lastSchool,
+        lastGradeCompleted,
+        lastStudyYear,
+        hasLongAbsence,
+        requestsPlacementTest,
+        requestsReligionExemption,
+        requestsPEExemption,
+        studyMode,
+        hasDisability,
+      ];
+}
